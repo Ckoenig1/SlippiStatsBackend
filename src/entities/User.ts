@@ -1,6 +1,7 @@
-import { CreateDateColumn,UpdateDateColumn, Entity, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany } from "typeorm";
+import { CreateDateColumn,UpdateDateColumn, Entity, Column, PrimaryGeneratedColumn, BaseEntity, OneToMany, ManyToMany, JoinTable } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { MatchupStats } from "./MatchupStats";
+import { FriendRequest } from "./FriendRequest";
 @ObjectType()
 @Entity()
 export class User extends BaseEntity{
@@ -11,11 +12,15 @@ export class User extends BaseEntity{
 
     @Field()
     @Column({unique: true})
-    username!: string;
+    username: string;
 
-    @Field()
-    @Column()
-    online: boolean;
+    @Field(() => Boolean)
+    @Column('boolean', {default: false})
+    online: boolean = false;
+
+    @ManyToMany(() => FriendRequest, friendRequest => friendRequest.users)
+    @JoinTable()
+    friendRequests: FriendRequest[];
 
     @OneToMany(() => MatchupStats, (stats) => stats.userCode)
     matchupStats: MatchupStats[];

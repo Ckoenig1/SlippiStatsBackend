@@ -21,6 +21,7 @@ const type_graphql_1 = require("type-graphql");
 const hello_1 = require("./resolvers/hello");
 const post_1 = require("./resolvers/post");
 const user_1 = require("./resolvers/user");
+const friendRequest_1 = require("./resolvers/friendRequest");
 const redis_1 = __importDefault(require("redis"));
 const express_session_1 = __importDefault(require("express-session"));
 const connect_redis_1 = __importDefault(require("connect-redis"));
@@ -29,6 +30,8 @@ const User_1 = require("./entities/User");
 const MatchupStats_1 = require("./entities/MatchupStats");
 const cors_1 = __importDefault(require("cors"));
 const stats_1 = require("./resolvers/stats");
+const FriendRequest_1 = require("./entities/FriendRequest");
+const Invitation_1 = require("./entities/Invitation");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     yield typeorm_1.createConnection({
         type: 'postgres',
@@ -38,7 +41,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
         port: 5432,
         logging: true,
         synchronize: true,
-        entities: [Post_1.Post, User_1.User, MatchupStats_1.MatchupStats]
+        entities: [Post_1.Post, User_1.User, MatchupStats_1.MatchupStats, FriendRequest_1.FriendRequest, Invitation_1.Invitation]
     }).catch((err) => console.log(err));
     const app = express_1.default();
     const RedisStore = connect_redis_1.default(express_session_1.default);
@@ -65,7 +68,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({
         schema: yield type_graphql_1.buildSchema({
-            resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver, stats_1.StatResolver],
+            resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver, stats_1.StatResolver, friendRequest_1.FriendRequestResolver],
             validate: false,
         }),
         context: ({ req, res }) => ({ req, res })

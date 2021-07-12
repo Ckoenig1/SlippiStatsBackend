@@ -5,6 +5,7 @@ import argon2 from "argon2";
 import {  COOKIE_NAME } from "../constants";
 import { getConnection } from "typeorm";
 import { InputType, Field, ObjectType, Query, Ctx, Arg, Mutation, Resolver } from "type-graphql";
+import { FieldError } from "../objectTypes/FieldError";
 
 @InputType()
 class UsernamePasswordInput{
@@ -14,16 +15,6 @@ class UsernamePasswordInput{
     @Field()
     password: string;
 }
-
-@ObjectType()
-class FieldError {
-    @Field()
-    field: string;
-    @Field()
-    message: string;
-}
-
-  
 
 @ObjectType()
 class UserResponse {
@@ -94,6 +85,7 @@ export class UserResolver {
             const result = await getConnection().createQueryBuilder().insert().into(User).values({
                 username: options.username,
                 password: hashedPassword,
+                online: false
             })
             .returning("*")
             .execute();
@@ -146,7 +138,9 @@ export class UserResolver {
         }
 
         req.session.userId = user.id;
-        User.update(user,{online: true})
+        user.online = true
+
+        User.save(user)
         console.log(req.session.userId)
         console.log(req.session)
 

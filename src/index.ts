@@ -7,6 +7,7 @@ import {buildSchema} from 'type-graphql';
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
+import { FriendRequestResolver } from "./resolvers/friendRequest";
 import redis from 'redis';
 import session from'express-session';
 import connectRedis from 'connect-redis';
@@ -15,6 +16,8 @@ import { User } from "./entities/User";
 import { MatchupStats } from "./entities/MatchupStats";
 import cors from "cors";
 import { StatResolver } from "./resolvers/stats";
+import { FriendRequest } from "./entities/FriendRequest";
+import { Invitation } from "./entities/Invitation";
 
 
 
@@ -28,7 +31,7 @@ const main = async () => {
         port: 5432,
         logging: true,
         synchronize: true,
-        entities: [Post,User,MatchupStats]
+        entities: [Post,User,MatchupStats,FriendRequest,Invitation]
     }).catch((err) => console.log(err))
     //await orm.getMigrator().up(); 
     const app = express();
@@ -63,7 +66,7 @@ const main = async () => {
    
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver,PostResolver,UserResolver,StatResolver],
+            resolvers: [HelloResolver,PostResolver,UserResolver,StatResolver,FriendRequestResolver],
             validate: false,
         }),
         context: ({req, res}) => ({req, res})

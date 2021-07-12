@@ -1,5 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 
 @ObjectType()
@@ -8,8 +8,6 @@ export class Invitation extends BaseEntity{
     @Field()
     @PrimaryGeneratedColumn()
     id!: number;
-    
-
 
     @Field(() => String)
     @CreateDateColumn()

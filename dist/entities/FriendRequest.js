@@ -9,58 +9,50 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
-const typeorm_1 = require("typeorm");
+exports.FriendRequest = void 0;
 const type_graphql_1 = require("type-graphql");
-const MatchupStats_1 = require("./MatchupStats");
-const FriendRequest_1 = require("./FriendRequest");
-let User = class User extends typeorm_1.BaseEntity {
-    constructor() {
-        super(...arguments);
-        this.online = false;
-    }
+const typeorm_1 = require("typeorm");
+const User_1 = require("./User");
+let FriendRequest = class FriendRequest extends typeorm_1.BaseEntity {
 };
 __decorate([
     type_graphql_1.Field(),
     typeorm_1.PrimaryGeneratedColumn(),
     __metadata("design:type", Number)
-], User.prototype, "id", void 0);
+], FriendRequest.prototype, "id", void 0);
 __decorate([
     type_graphql_1.Field(),
-    typeorm_1.Column({ unique: true }),
-    __metadata("design:type", String)
-], User.prototype, "username", void 0);
-__decorate([
-    type_graphql_1.Field(() => Boolean),
-    typeorm_1.Column('boolean', { default: false }),
-    __metadata("design:type", Boolean)
-], User.prototype, "online", void 0);
-__decorate([
-    typeorm_1.ManyToMany(() => FriendRequest_1.FriendRequest, friendRequest => friendRequest.users),
-    typeorm_1.JoinTable(),
-    __metadata("design:type", Array)
-], User.prototype, "friendRequests", void 0);
-__decorate([
-    typeorm_1.OneToMany(() => MatchupStats_1.MatchupStats, (stats) => stats.userCode),
-    __metadata("design:type", Array)
-], User.prototype, "matchupStats", void 0);
-__decorate([
     typeorm_1.Column(),
     __metadata("design:type", String)
-], User.prototype, "password", void 0);
+], FriendRequest.prototype, "requester", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    typeorm_1.Column(),
+    __metadata("design:type", String)
+], FriendRequest.prototype, "requestee", void 0);
+__decorate([
+    type_graphql_1.Field(),
+    typeorm_1.Column(),
+    __metadata("design:type", Number)
+], FriendRequest.prototype, "status", void 0);
+__decorate([
+    typeorm_1.ManyToMany(() => User_1.User, user => user.friendRequests),
+    __metadata("design:type", Array)
+], FriendRequest.prototype, "users", void 0);
 __decorate([
     type_graphql_1.Field(() => String),
     typeorm_1.CreateDateColumn(),
     __metadata("design:type", Date)
-], User.prototype, "createdAt", void 0);
+], FriendRequest.prototype, "createdAt", void 0);
 __decorate([
     type_graphql_1.Field(() => String),
     typeorm_1.UpdateDateColumn(),
     __metadata("design:type", Date)
-], User.prototype, "updatedAt", void 0);
-User = __decorate([
+], FriendRequest.prototype, "updatedAt", void 0);
+FriendRequest = __decorate([
     type_graphql_1.ObjectType(),
-    typeorm_1.Entity()
-], User);
-exports.User = User;
-//# sourceMappingURL=User.js.map
+    typeorm_1.Entity(),
+    typeorm_1.Index(["requester", "requestee"], { unique: true })
+], FriendRequest);
+exports.FriendRequest = FriendRequest;
+//# sourceMappingURL=FriendRequest.js.map

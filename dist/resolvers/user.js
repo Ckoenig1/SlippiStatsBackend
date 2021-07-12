@@ -26,10 +26,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
 const User_1 = require("../entities/User");
-const type_graphql_1 = require("type-graphql");
 const argon2_1 = __importDefault(require("argon2"));
 const constants_1 = require("../constants");
 const typeorm_1 = require("typeorm");
+const type_graphql_1 = require("type-graphql");
+const FieldError_1 = require("../objectTypes/FieldError");
 let UsernamePasswordInput = class UsernamePasswordInput {
 };
 __decorate([
@@ -43,23 +44,10 @@ __decorate([
 UsernamePasswordInput = __decorate([
     type_graphql_1.InputType()
 ], UsernamePasswordInput);
-let FieldError = class FieldError {
-};
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], FieldError.prototype, "field", void 0);
-__decorate([
-    type_graphql_1.Field(),
-    __metadata("design:type", String)
-], FieldError.prototype, "message", void 0);
-FieldError = __decorate([
-    type_graphql_1.ObjectType()
-], FieldError);
 let UserResponse = class UserResponse {
 };
 __decorate([
-    type_graphql_1.Field(() => [FieldError], { nullable: true }),
+    type_graphql_1.Field(() => [FieldError_1.FieldError], { nullable: true }),
     __metadata("design:type", Array)
 ], UserResponse.prototype, "errors", void 0);
 __decorate([
@@ -75,6 +63,17 @@ let UserResolver = class UserResolver {
             return null;
         }
         return User_1.User.findOne(req.session.userId);
+    }
+    online(user) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let foundUser = yield User_1.User.findOne({ where: { username: user } });
+            if (foundUser) {
+                return foundUser.online;
+            }
+            else {
+                return false;
+            }
+        });
     }
     register(options, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -104,6 +103,7 @@ let UserResolver = class UserResolver {
                 const result = yield typeorm_1.getConnection().createQueryBuilder().insert().into(User_1.User).values({
                     username: options.username,
                     password: hashedPassword,
+                    online: false
                 })
                     .returning("*")
                     .execute();
@@ -152,6 +152,8 @@ let UserResolver = class UserResolver {
                 };
             }
             req.session.userId = user.id;
+            user.online = true;
+            User_1.User.save(user);
             console.log(req.session.userId);
             console.log(req.session);
             return {
@@ -178,6 +180,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "me", null);
+__decorate([
+    type_graphql_1.Query(() => Boolean),
+    __param(0, type_graphql_1.Arg('username')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "online", null);
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg('options')),

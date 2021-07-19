@@ -87,6 +87,9 @@ export class FriendRequestResolver {
                 ]
             };
         }
+        request.status = response
+        FriendRequest.save(request)
+        return request;
     }
     
     @Mutation(() => FriendResponse)

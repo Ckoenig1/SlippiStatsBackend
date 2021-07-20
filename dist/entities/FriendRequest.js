@@ -36,6 +36,7 @@ __decorate([
     __metadata("design:type", Number)
 ], FriendRequest.prototype, "status", void 0);
 __decorate([
+    type_graphql_1.Field(() => [User_1.User]),
     typeorm_1.ManyToMany(() => User_1.User, user => user.friendRequests),
     __metadata("design:type", Array)
 ], FriendRequest.prototype, "users", void 0);

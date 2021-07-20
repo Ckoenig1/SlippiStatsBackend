@@ -21,26 +21,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FriendRequestResolver = void 0;
-const FriendRequest_1 = require("../entities/FriendRequest");
+exports.InvitationResolver = void 0;
+const Invitation_1 = require("../entities/Invitation");
 const User_1 = require("../entities/User");
-const type_graphql_1 = require("type-graphql");
 const FieldError_1 = require("../objectTypes/FieldError");
-let FriendResponse = class FriendResponse {
+const type_graphql_1 = require("type-graphql");
+let InvitationResponse = class InvitationResponse {
 };
 __decorate([
     type_graphql_1.Field(() => [FieldError_1.FieldError], { nullable: true }),
     __metadata("design:type", Array)
-], FriendResponse.prototype, "errors", void 0);
+], InvitationResponse.prototype, "errors", void 0);
 __decorate([
-    type_graphql_1.Field(() => FriendRequest_1.FriendRequest, { nullable: true }),
-    __metadata("design:type", FriendRequest_1.FriendRequest)
-], FriendResponse.prototype, "friendRequest", void 0);
-FriendResponse = __decorate([
+    type_graphql_1.Field(() => Invitation_1.Invitation, { nullable: true }),
+    __metadata("design:type", Invitation_1.Invitation)
+], InvitationResponse.prototype, "invitation", void 0);
+InvitationResponse = __decorate([
     type_graphql_1.ObjectType()
-], FriendResponse);
-let FriendRequestResolver = class FriendRequestResolver {
-    getFriendRequests({ req }) {
+], InvitationResponse);
+let InvitationResolver = class InvitationResolver {
+    invitations({ req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!req.session.userId) {
                 return {
@@ -53,14 +53,14 @@ let FriendRequestResolver = class FriendRequestResolver {
                 };
             }
             const requests = yield User_1.User.find({
-                relations: ['friendRequests'],
+                relations: ['invitations'],
                 where: { id: req.session.userId }
             });
-            const map = requests.map(req => req.friendRequests);
+            const map = requests.map(req => req.invitations);
             return map.flat();
         });
     }
-    respondToFriendRequest(requestId, response, { req }) {
+    respondToInvitation(requestId, response, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!req.session.userId) {
                 return {
@@ -73,7 +73,7 @@ let FriendRequestResolver = class FriendRequestResolver {
                 };
             }
             const user = yield User_1.User.findOne({ where: { id: req.session.userId } });
-            const request = yield FriendRequest_1.FriendRequest.findOne({ where: { id: requestId } });
+            const request = yield Invitation_1.Invitation.findOne({ where: { id: requestId } });
             if (!request || !user) {
                 return {
                     errors: [
@@ -94,17 +94,28 @@ let FriendRequestResolver = class FriendRequestResolver {
                     ]
                 };
             }
+            if (Date.now() - request.createdAt.valueOf() > 60000) {
+                Invitation_1.Invitation.remove(request);
+                return {
+                    errors: [
+                        {
+                            field: "requestId",
+                            message: "this request has expired"
+                        }
+                    ]
+                };
+            }
             if (response) {
                 request.status = 1;
             }
             else {
                 request.status = -1;
             }
-            FriendRequest_1.FriendRequest.save(request);
-            return { friendRequest: request };
+            Invitation_1.Invitation.save(request);
+            return { invitation: request };
         });
     }
-    createFriendRequest(username, { req }) {
+    createInvitation(username, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!req.session.userId) {
                 return {
@@ -133,42 +144,42 @@ let FriendRequestResolver = class FriendRequestResolver {
                     errors: [
                         {
                             field: 'username',
-                            message: 'you are not logged in'
+                            message: 'you do not exist'
                         }
                     ]
                 };
             }
-            const request = FriendRequest_1.FriendRequest.create({ requester: requester.username, status: 0, requestee: requestee.username, users: [requester, requestee] }).save();
-            return { friendRequest: request };
+            const request = Invitation_1.Invitation.create({ requester: requester.username, status: 0, requestee: requestee.username, users: [requester, requestee], matchType: 1 }).save();
+            return { invitation: request };
         });
     }
 };
 __decorate([
-    type_graphql_1.Query(() => [FriendRequest_1.FriendRequest]),
+    type_graphql_1.Query(() => [Invitation_1.Invitation]),
     __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], FriendRequestResolver.prototype, "getFriendRequests", null);
+], InvitationResolver.prototype, "invitations", null);
 __decorate([
-    type_graphql_1.Mutation(() => FriendResponse),
+    type_graphql_1.Mutation(() => InvitationResponse),
     __param(0, type_graphql_1.Arg("requestId")),
     __param(1, type_graphql_1.Arg("response")),
     __param(2, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number, Boolean, Object]),
     __metadata("design:returntype", Promise)
-], FriendRequestResolver.prototype, "respondToFriendRequest", null);
+], InvitationResolver.prototype, "respondToInvitation", null);
 __decorate([
-    type_graphql_1.Mutation(() => FriendResponse),
+    type_graphql_1.Mutation(() => InvitationResponse),
     __param(0, type_graphql_1.Arg("username")),
     __param(1, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
-], FriendRequestResolver.prototype, "createFriendRequest", null);
-FriendRequestResolver = __decorate([
+], InvitationResolver.prototype, "createInvitation", null);
+InvitationResolver = __decorate([
     type_graphql_1.Resolver()
-], FriendRequestResolver);
-exports.FriendRequestResolver = FriendRequestResolver;
-//# sourceMappingURL=friendRequest.js.map
+], InvitationResolver);
+exports.InvitationResolver = InvitationResolver;
+//# sourceMappingURL=invitation.js.map

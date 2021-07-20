@@ -1,6 +1,6 @@
 
 import { Field, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, Index, ManyToMany, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, Index, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "./User";
 
 
@@ -31,7 +31,7 @@ export class Invitation extends BaseEntity {
     @Column()
     status: number
 
-    @ManyToMany(() => User, user => user.friendRequests)
+    @ManyToMany(() => User, user => user.invitations)
     users: User[];
 
     @Field(() => String)

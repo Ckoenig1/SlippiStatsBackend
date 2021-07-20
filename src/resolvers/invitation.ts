@@ -1,28 +1,25 @@
-import { FriendRequest } from "../entities/FriendRequest";
+import { Invitation } from "../entities/Invitation";
 import { User } from "../entities/User";
-import { MyContext } from "../types";
-import { Arg, Ctx, Field, Mutation, ObjectType,Query,Resolver } from "type-graphql";
 import { FieldError } from "../objectTypes/FieldError";
-
-
+import { MyContext } from "../types";
+import { Arg, Ctx, Field, Mutation, ObjectType, Query,Resolver } from "type-graphql";
 
 
 
 @ObjectType()
-class FriendResponse {
+class InvitationResponse {
     @Field(() => [FieldError], {nullable: true})
     errors?: FieldError[];
 
-    @Field(() => FriendRequest, {nullable: true})
-    friendRequest?: FriendRequest;
+    @Field(() => Invitation, {nullable: true})
+    invitation?: Invitation;
 }
 
 
 @Resolver()
-export class FriendRequestResolver {
-
-    @Query(() => [FriendRequest])
-    async getFriendRequests(
+export class InvitationResolver{
+    @Query(() => [Invitation])
+    async invitations(
         @Ctx()
         {req}: MyContext
     ){
@@ -37,17 +34,17 @@ export class FriendRequestResolver {
             };
         }
         const requests = await User.find({
-            relations: ['friendRequests'],
+            relations: ['invitations'],
             where: {id: req.session.userId}
         })
-        const map = requests.map(req => req.friendRequests)
+        const map = requests.map(req => req.invitations)
         
        
         return map.flat()
-    }  
-
-    @Mutation(() => FriendResponse)
-    async respondToFriendRequest(
+    }
+    
+    @Mutation(() => InvitationResponse)
+    async respondToInvitation(
         @Arg("requestId")
         requestId: number,
         @Arg("response")
@@ -66,7 +63,7 @@ export class FriendRequestResolver {
             };
         }
         const user = await User.findOne({where:{id:req.session.userId}})
-        const request = await FriendRequest.findOne({where:{id:requestId}})
+        const request = await Invitation.findOne({where:{id:requestId}})
         if(!request || !user){
             return {
                 errors: [
@@ -87,18 +84,31 @@ export class FriendRequestResolver {
                 ]
             };
         }
+        // is the invitation older than 5 minutes
+        //300000
+        if(Date.now() - request.createdAt.valueOf() > 60000 ){
+            Invitation.remove(request)
+            return {
+                errors: [
+                    {
+                        field: "requestId",
+                        message: "this request has expired"
+                    }
+                ]
+            }
+        }
         if(response){
             request.status = 1
         }
         else{
             request.status = -1
         }
-        FriendRequest.save(request)
-        return {friendRequest: request};
+        Invitation.save(request)
+        return {invitation: request};
     }
     
-    @Mutation(() => FriendResponse)
-    async createFriendRequest(
+    @Mutation(() => InvitationResponse)
+    async createInvitation(
         @Arg("username")
         username:string,
         @Ctx()
@@ -132,13 +142,13 @@ export class FriendRequestResolver {
                 errors: [
                     {
                         field: 'username',
-                        message: 'you are not logged in'
+                        message: 'you do not exist'
                     }
                 ]
             }
         }
 
-        const request = FriendRequest.create({requester : requester.username, status: 0,requestee: requestee.username,users: [requester,requestee]}).save()
-        return {friendRequest: request}
+        const request = Invitation.create({requester : requester.username, status: 0,requestee: requestee.username,users: [requester,requestee], matchType: 1}).save()
+        return {invitation: request}
     }
 }

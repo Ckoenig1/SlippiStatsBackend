@@ -53,6 +53,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options : UsernamePasswordInput,
+        @Arg('userCode') userCode: string,
         @Ctx() {req}: MyContext
     ): Promise<UserResponse>{
         if(options.username.length <= 2){
@@ -76,16 +77,14 @@ export class UserResolver {
             }
         }
         const hashedPassword = await argon2.hash(options.password);
-        // const user = em.create(User,{
-        //     username: options.username,
-        //     password: hashedPassword,
-        // });
+       
         let user;
         try{
             const result = await getConnection().createQueryBuilder().insert().into(User).values({
                 username: options.username,
                 password: hashedPassword,
-                online: false
+                online: true,
+                userCode: userCode
             })
             .returning("*")
             .execute();

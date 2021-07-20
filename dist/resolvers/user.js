@@ -75,7 +75,7 @@ let UserResolver = class UserResolver {
             }
         });
     }
-    register(options, { req }) {
+    register(options, userCode, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
             if (options.username.length <= 2) {
                 return {
@@ -103,7 +103,8 @@ let UserResolver = class UserResolver {
                 const result = yield typeorm_1.getConnection().createQueryBuilder().insert().into(User_1.User).values({
                     username: options.username,
                     password: hashedPassword,
-                    online: false
+                    online: true,
+                    userCode: userCode
                 })
                     .returning("*")
                     .execute();
@@ -190,9 +191,10 @@ __decorate([
 __decorate([
     type_graphql_1.Mutation(() => UserResponse),
     __param(0, type_graphql_1.Arg('options')),
-    __param(1, type_graphql_1.Ctx()),
+    __param(1, type_graphql_1.Arg('userCode')),
+    __param(2, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [UsernamePasswordInput, Object]),
+    __metadata("design:paramtypes", [UsernamePasswordInput, String, Object]),
     __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "register", null);
 __decorate([

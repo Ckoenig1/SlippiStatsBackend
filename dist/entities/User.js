@@ -14,6 +14,7 @@ const typeorm_1 = require("typeorm");
 const type_graphql_1 = require("type-graphql");
 const MatchupStats_1 = require("./MatchupStats");
 const FriendRequest_1 = require("./FriendRequest");
+const Invitation_1 = require("./Invitation");
 let User = class User extends typeorm_1.BaseEntity {
     constructor() {
         super(...arguments);
@@ -31,15 +32,27 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "username", void 0);
 __decorate([
+    type_graphql_1.Field(),
+    typeorm_1.Column({ unique: true }),
+    __metadata("design:type", String)
+], User.prototype, "userCode", void 0);
+__decorate([
     type_graphql_1.Field(() => Boolean),
     typeorm_1.Column('boolean', { default: false }),
     __metadata("design:type", Boolean)
 ], User.prototype, "online", void 0);
 __decorate([
+    type_graphql_1.Field(() => [FriendRequest_1.FriendRequest]),
     typeorm_1.ManyToMany(() => FriendRequest_1.FriendRequest, friendRequest => friendRequest.users),
     typeorm_1.JoinTable(),
     __metadata("design:type", Array)
 ], User.prototype, "friendRequests", void 0);
+__decorate([
+    type_graphql_1.Field(() => [Invitation_1.Invitation]),
+    typeorm_1.ManyToMany(() => Invitation_1.Invitation, invitation => invitation.users),
+    typeorm_1.JoinTable(),
+    __metadata("design:type", Array)
+], User.prototype, "invitations", void 0);
 __decorate([
     typeorm_1.OneToMany(() => MatchupStats_1.MatchupStats, (stats) => stats.userCode),
     __metadata("design:type", Array)

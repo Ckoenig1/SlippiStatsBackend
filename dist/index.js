@@ -32,6 +32,7 @@ const cors_1 = __importDefault(require("cors"));
 const stats_1 = require("./resolvers/stats");
 const FriendRequest_1 = require("./entities/FriendRequest");
 const Invitation_1 = require("./entities/Invitation");
+const invitation_1 = require("./resolvers/invitation");
 const main = () => __awaiter(void 0, void 0, void 0, function* () {
     yield typeorm_1.createConnection({
         type: 'postgres',
@@ -68,7 +69,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({
         schema: yield type_graphql_1.buildSchema({
-            resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver, stats_1.StatResolver, friendRequest_1.FriendRequestResolver],
+            resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver, stats_1.StatResolver, friendRequest_1.FriendRequestResolver, invitation_1.InvitationResolver],
             validate: false,
         }),
         context: ({ req, res }) => ({ req, res })

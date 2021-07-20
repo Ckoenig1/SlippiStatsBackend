@@ -18,6 +18,7 @@ import cors from "cors";
 import { StatResolver } from "./resolvers/stats";
 import { FriendRequest } from "./entities/FriendRequest";
 import { Invitation } from "./entities/Invitation";
+import { InvitationResolver } from "./resolvers/invitation";
 
 
 
@@ -66,7 +67,7 @@ const main = async () => {
    
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver,PostResolver,UserResolver,StatResolver,FriendRequestResolver],
+            resolvers: [HelloResolver,PostResolver,UserResolver,StatResolver,FriendRequestResolver,InvitationResolver],
             validate: false,
         }),
         context: ({req, res}) => ({req, res})

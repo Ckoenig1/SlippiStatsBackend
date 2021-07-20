@@ -64,6 +64,9 @@ let UserResolver = class UserResolver {
         }
         return User_1.User.findOne(req.session.userId);
     }
+    getUsers(users) {
+        return User_1.User.find({ where: { username: typeorm_1.In(users) } });
+    }
     online(user) {
         return __awaiter(this, void 0, void 0, function* () {
             let foundUser = yield User_1.User.findOne({ where: { username: user } });
@@ -181,6 +184,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "me", null);
+__decorate([
+    type_graphql_1.Query(() => [User_1.User]),
+    __param(0, type_graphql_1.Arg("users", () => [String])),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array]),
+    __metadata("design:returntype", void 0)
+], UserResolver.prototype, "getUsers", null);
 __decorate([
     type_graphql_1.Query(() => Boolean),
     __param(0, type_graphql_1.Arg('username')),

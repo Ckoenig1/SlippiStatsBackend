@@ -3,7 +3,7 @@ import { User } from "../entities/User";
 import { MyContext } from "src/types";
 import argon2 from "argon2";
 import {  COOKIE_NAME } from "../constants";
-import { getConnection } from "typeorm";
+import { getConnection, In } from "typeorm";
 import { InputType, Field, ObjectType, Query, Ctx, Arg, Mutation, Resolver } from "type-graphql";
 import { FieldError } from "../objectTypes/FieldError";
 
@@ -37,6 +37,14 @@ export class UserResolver {
             return null;
         }
         return User.findOne(req.session.userId);
+    }
+
+    @Query(() => [User])
+    getUsers(
+        @Arg("users", () => [String]) users: String[]
+    ){
+       
+        return User.find({where:{username: In(users)}})
     }
 
     @Query(()=> Boolean)

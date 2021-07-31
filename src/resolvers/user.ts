@@ -22,7 +22,16 @@ class UserResponse {
     errors?: FieldError[];
 
     @Field(() => User, {nullable: true})
-    user?: User;
+    user?: User ;
+}
+
+@ObjectType()
+class UsersResponse {
+    @Field(() => [FieldError], {nullable: true})
+    errors?: FieldError[];
+
+    @Field(() => [User], {nullable: true})
+    users?: User[];
 }
 
 @Resolver()
@@ -39,13 +48,40 @@ export class UserResolver {
         return User.findOne(req.session.userId);
     }
 
-    @Query(() => [User])
-    getUsers(
-        @Arg("users", () => [String]) users: String[]
-    ){
-       
-        return User.find({where:{username: In(users)}})
+    @Query(() => UsersResponse)
+    async getUsers(
+        @Ctx() {req}: MyContext
+    ):Promise<UsersResponse>{
+        if(!req.session.userId){
+            return {
+                errors: [
+                    {
+                        field: 'user',
+                        message: 'you are not logged in'
+                    }
+                ]
+            };
+        }
+        
+        const requests = await User.find({
+            relations: ['friendRequests'],
+            where: {id: req.session.userId}
+        })
+        let user = requests[0].username
+        const map = requests.map(req => req.friendRequests)
+        let friendReqs =  map.flat()
+        let friends = friendReqs.map(req => {
+            if(req.requestee === user){
+                return req.requester
+            }
+            return req.requestee
+        })
+        let users = await User.find({where:{username: In(friends)}})
+        console.log(users)
+        return {users: users};
     }
+
+
 
     @Query(()=> Boolean)
     async online(@Arg('username') user : string ){
@@ -64,22 +100,34 @@ export class UserResolver {
         @Arg('userCode') userCode: string,
         @Ctx() {req}: MyContext
     ): Promise<UserResponse>{
+        let regExp = /^[A-Za-z]+\#{1}\d+$/;
+        if(!regExp.test(userCode)){
+            return {
+                errors: [
+                    {
+                        field: 'userCode',
+                        message: 'Invalid connect code. Codes need to be in the form letters + # + numbers'
+                    }
+                ]
+            }
+        }
         if(options.username.length <= 2){
             return{
                 errors: [
                     {
                         field: 'username',
-                        message: 'length must be greater than 2'
+                        message: 'Username length must be greater than 2'
                     }
                 ]
             }
         }
+
         if(options.password.length <= 4){
             return{
                 errors: [
                     {
                         field: 'password',
-                        message: 'length must be greater than 4'
+                        message: 'Password length must be greater than 4'
                     }
                 ]
             }
@@ -92,20 +140,35 @@ export class UserResolver {
                 username: options.username,
                 password: hashedPassword,
                 online: true,
-                userCode: userCode
+                userCode: userCode.toUpperCase()
             })
             .returning("*")
             .execute();
             user = result.raw[0];
         } catch(err){
             if(err.code === "23505"){
-                return {
-                    errors: [
-                        {
-                            field: "username",
-                            message: "username already taken",
-                        }
-                    ]
+                let detail = (err.detail.split("="))
+                let userError = "Key (username)"
+                console.log(detail[0])
+                if(detail[0] == userError){
+                    return {
+                        errors: [
+                            {
+                                field: "username",
+                                message: "username already taken",
+                            }
+                        ]
+                    }
+                }
+                else{ 
+                    return {
+                        errors: [
+                            {
+                                field: "userCode",
+                                message: "That connect code is already taken",
+                            }
+                        ]
+                    }
                 }
             }
         }
@@ -148,8 +211,7 @@ export class UserResolver {
         user.online = true
 
         User.save(user)
-        console.log(req.session.userId)
-        console.log(req.session)
+        
 
         return {
             user,

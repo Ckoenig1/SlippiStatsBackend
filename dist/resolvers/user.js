@@ -57,6 +57,19 @@ __decorate([
 UserResponse = __decorate([
     type_graphql_1.ObjectType()
 ], UserResponse);
+let UsersResponse = class UsersResponse {
+};
+__decorate([
+    type_graphql_1.Field(() => [FieldError_1.FieldError], { nullable: true }),
+    __metadata("design:type", Array)
+], UsersResponse.prototype, "errors", void 0);
+__decorate([
+    type_graphql_1.Field(() => [User_1.User], { nullable: true }),
+    __metadata("design:type", Array)
+], UsersResponse.prototype, "users", void 0);
+UsersResponse = __decorate([
+    type_graphql_1.ObjectType()
+], UsersResponse);
 let UserResolver = class UserResolver {
     me({ req }) {
         if (!req.session.userId) {
@@ -64,8 +77,35 @@ let UserResolver = class UserResolver {
         }
         return User_1.User.findOne(req.session.userId);
     }
-    getUsers(users) {
-        return User_1.User.find({ where: { username: typeorm_1.In(users) } });
+    getUsers({ req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!req.session.userId) {
+                return {
+                    errors: [
+                        {
+                            field: 'user',
+                            message: 'you are not logged in'
+                        }
+                    ]
+                };
+            }
+            const requests = yield User_1.User.find({
+                relations: ['friendRequests'],
+                where: { id: req.session.userId }
+            });
+            let user = requests[0].username;
+            const map = requests.map(req => req.friendRequests);
+            let friendReqs = map.flat();
+            let friends = friendReqs.map(req => {
+                if (req.requestee === user) {
+                    return req.requester;
+                }
+                return req.requestee;
+            });
+            let users = yield User_1.User.find({ where: { username: typeorm_1.In(friends) } });
+            console.log(users);
+            return { users: users };
+        });
     }
     online(user) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -80,12 +120,23 @@ let UserResolver = class UserResolver {
     }
     register(options, userCode, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
+            let regExp = /^[A-Za-z]+\#{1}\d+$/;
+            if (!regExp.test(userCode)) {
+                return {
+                    errors: [
+                        {
+                            field: 'userCode',
+                            message: 'Invalid connect code. Codes need to be in the form letters + # + numbers'
+                        }
+                    ]
+                };
+            }
             if (options.username.length <= 2) {
                 return {
                     errors: [
                         {
                             field: 'username',
-                            message: 'length must be greater than 2'
+                            message: 'Username length must be greater than 2'
                         }
                     ]
                 };
@@ -95,7 +146,7 @@ let UserResolver = class UserResolver {
                     errors: [
                         {
                             field: 'password',
-                            message: 'length must be greater than 4'
+                            message: 'Password length must be greater than 4'
                         }
                     ]
                 };
@@ -107,7 +158,7 @@ let UserResolver = class UserResolver {
                     username: options.username,
                     password: hashedPassword,
                     online: true,
-                    userCode: userCode
+                    userCode: userCode.toUpperCase()
                 })
                     .returning("*")
                     .execute();
@@ -115,14 +166,29 @@ let UserResolver = class UserResolver {
             }
             catch (err) {
                 if (err.code === "23505") {
-                    return {
-                        errors: [
-                            {
-                                field: "username",
-                                message: "username already taken",
-                            }
-                        ]
-                    };
+                    let detail = (err.detail.split("="));
+                    let userError = "Key (username)";
+                    console.log(detail[0]);
+                    if (detail[0] == userError) {
+                        return {
+                            errors: [
+                                {
+                                    field: "username",
+                                    message: "username already taken",
+                                }
+                            ]
+                        };
+                    }
+                    else {
+                        return {
+                            errors: [
+                                {
+                                    field: "userCode",
+                                    message: "That connect code is already taken",
+                                }
+                            ]
+                        };
+                    }
                 }
             }
             req.session.userId = user.id;
@@ -158,8 +224,6 @@ let UserResolver = class UserResolver {
             req.session.userId = user.id;
             user.online = true;
             User_1.User.save(user);
-            console.log(req.session.userId);
-            console.log(req.session);
             return {
                 user,
             };
@@ -185,11 +249,11 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "me", null);
 __decorate([
-    type_graphql_1.Query(() => [User_1.User]),
-    __param(0, type_graphql_1.Arg("users", () => [String])),
+    type_graphql_1.Query(() => UsersResponse),
+    __param(0, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Array]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
 ], UserResolver.prototype, "getUsers", null);
 __decorate([
     type_graphql_1.Query(() => Boolean),
